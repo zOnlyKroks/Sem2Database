@@ -1,58 +1,40 @@
-#include "shared.cpp"
-
-struct Student {
-  string matrikel, vorname, nachname;
-};
-
-struct Studiengang {
-  string nr, name;
-};
-
-vector<Student> studierende;
-vector<Studiengang> studiengaenge;
-vector<pair<string, string>> zuordnungen;
-
-Student* find_student_by_id(const string& matrikel) {
-  auto it =
-      find_if(studierende.begin(), studierende.end(),
-              [&matrikel](const Student& s) { return s.matrikel == matrikel; });
-
-  if (it != studierende.end()) {
-    return &(*it);
-  }
-  return nullptr;
-}
+#include <algorithm>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <string>
+#include <vector>
+#include "datasourceUtils.cpp"
 
 Student* find_student_by_name(const string& vorname, const string& nachname) {
-  auto it =
-      find_if(studierende.begin(), studierende.end(), [&](const Student& s) {
-        return s.vorname == vorname && s.nachname == nachname;
-      });
-
-  if (it != studierende.end()) {
-    return &(*it);
+  for (auto& student : studierende) {
+    if (student.vorname == vorname && student.nachname == nachname) {
+      return &student;
+    }
   }
   return nullptr;
 }
 
 Studiengang* find_studiengang(const string& nr) {
-  auto it = find_if(studiengaenge.begin(), studiengaenge.end(),
-                    [&nr](const Studiengang& sg) {
-                      try {
-                        return std::stoi(sg.nr) == std::stoi(nr);
-                      } catch (const std::exception& e) {
-                        return sg.nr == nr;
-                      }
-                    });
-
-  if (it != studiengaenge.end()) {
-    return &(*it);
+  for (auto& sg : studiengaenge) {
+    try {
+      if (std::stoi(sg.nr) == std::stoi(nr)) {
+        return &sg;
+      }
+    } catch (const std::exception&) {
+      if (sg.nr == nr) {
+        return &sg;
+      }
+    }
   }
   return nullptr;
 }
 
 vector<Studiengang*> get_student_programs(const string& matrikel) {
   vector<Studiengang*> programs;
+
   for (const auto& z : zuordnungen) {
     if (z.first == matrikel) {
       Studiengang* sg = find_studiengang(z.second);
@@ -61,77 +43,75 @@ vector<Studiengang*> get_student_programs(const string& matrikel) {
       }
     }
   }
+
   return programs;
 }
 
+void display_menu() {
+  cout << "\n╔════════════════════════════════════════════════════╗" << endl;
+  cout << "║              STUDENTENVERWALTUNGSSYSTEM            ║" << endl;
+  cout << "╠════════════════════════════════════════════════════╣" << endl;
+  cout << "║ 1. Alle Studierende anzeigen                       ║" << endl;
+  cout << "║ 2. Studiengänge verwalten                          ║" << endl;
+  cout << "║ 3. Änderungen speichern                            ║" << endl;
+  cout << "║ 4. Beenden                                         ║" << endl;
+  cout << "╚════════════════════════════════════════════════════╝" << endl;
+  cout << "Ihre Wahl: ";
+}
+
 void print_studierende() {
+  setlocale(LC_ALL, "");
+
   size_t max_vorname = 8;
   size_t max_nachname = 9;
   size_t max_studiengang = 12;
-
-  map<string, vector<Student*>> students_by_program;
-
-  for (auto& student : studierende) {
+  
+  for (const auto& student : studierende) {
     max_vorname = max(max_vorname, student.vorname.length());
     max_nachname = max(max_nachname, student.nachname.length());
-
-    vector<Studiengang*> programs = get_student_programs(student.matrikel);
-
-    if (programs.empty()) {
-      students_by_program["Kein Studiengang"].push_back(&student);
-      max_studiengang =
-          max(max_studiengang, string("Kein Studiengang").length());
-    } else {
-      for (auto& sg : programs) {
-        max_studiengang = max(max_studiengang, sg->name.length());
-        students_by_program[sg->name].push_back(&student);
-      }
-    }
+    max_studiengang = max(max_studiengang, student.studiengang.length());
   }
 
-  // Wenn keine Studierende vorhanden sind
-  if (studierende.empty()) {
-    cout << "\n╔════════════════════════════════════════════════════╗" << endl;
-    cout << "║            Keine Studierende gefunden              ║" << endl;
-    cout << "╚════════════════════════════════════════════════════╝" << endl;
-    return;
+  string top_left     = "╔", top_right    = "╗",
+         bottom_left  = "╚", bottom_right = "╝",
+         horizontal   = "═", vertical     = "║",
+         top_sep      = "╦", middle_left  = "╠",
+         middle_sep   = "╬", middle_right = "╣",
+         bottom_sep   = "╩";
+
+  cout << "\n" << top_left;
+  for (size_t i = 0; i < max_vorname + 2; i++) cout << horizontal;
+  cout << top_sep;
+  for (size_t i = 0; i < max_nachname + 2; i++) cout << horizontal;
+  cout << top_sep;
+  for (size_t i = 0; i < max_studiengang + 2; i++) cout << horizontal;
+  cout << top_right << "\n";
+
+  cout << vertical << " " << setw(max_vorname) << left << "Vorname" << " " << vertical;
+  cout << " " << setw(max_nachname) << left << "Nachname" << " " << vertical;
+  cout << " " << setw(max_studiengang) << left << "Studiengang" << " " << vertical << "\n";
+
+  cout << middle_left;
+  for (size_t i = 0; i < max_vorname + 2; i++) cout << horizontal;
+  cout << middle_sep;
+  for (size_t i = 0; i < max_nachname + 2; i++) cout << horizontal;
+  cout << middle_sep;
+  for (size_t i = 0; i < max_studiengang + 2; i++) cout << horizontal;
+  cout << middle_right << "\n";
+
+  for (const auto& student : studierende) {
+    cout << vertical << " " << setw(max_vorname) << left << student.vorname << " " << vertical;
+    cout << " " << setw(max_nachname) << left << student.nachname << " " << vertical;
+    cout << " " << setw(max_studiengang) << left << student.studiengang << " " << vertical << "\n";
   }
 
-  cout << "\n╔";
-  for (size_t i = 0; i < max_vorname + 2; i++) cout << "═";
-  cout << "╦";
-  for (size_t i = 0; i < max_nachname + 2; i++) cout << "═";
-  cout << "╦";
-  for (size_t i = 0; i < max_studiengang + 2; i++) cout << "═";
-  cout << "╗" << endl;
-
-  cout << "║ " << setw(max_vorname) << left << "Vorname" << " ║ ";
-  cout << setw(max_nachname) << left << "Nachname" << " ║ ";
-  cout << setw(max_studiengang) << left << "Studiengang" << " ║" << endl;
-
-  cout << "╠";
-  for (size_t i = 0; i < max_vorname + 2; i++) cout << "═";
-  cout << "╬";
-  for (size_t i = 0; i < max_nachname + 2; i++) cout << "═";
-  cout << "╬";
-  for (size_t i = 0; i < max_studiengang + 2; i++) cout << "═";
-  cout << "╣" << endl;
-
-  for (const auto& [program_name, students] : students_by_program) {
-    for (const auto& student : students) {
-      cout << "║ " << setw(max_vorname) << left << student->vorname << " ║ ";
-      cout << setw(max_nachname) << left << student->nachname << " ║ ";
-      cout << setw(max_studiengang) << left << program_name << " ║" << endl;
-    }
-  }
-
-  cout << "╚";
-  for (size_t i = 0; i < max_vorname + 2; i++) cout << "═";
-  cout << "╩";
-  for (size_t i = 0; i < max_nachname + 2; i++) cout << "═";
-  cout << "╩";
-  for (size_t i = 0; i < max_studiengang + 2; i++) cout << "═";
-  cout << "╝" << endl;
+  cout << bottom_left;
+  for (size_t i = 0; i < max_vorname + 2; i++) cout << horizontal;
+  cout << bottom_sep;
+  for (size_t i = 0; i < max_nachname + 2; i++) cout << horizontal;
+  cout << bottom_sep;
+  for (size_t i = 0; i < max_studiengang + 2; i++) cout << horizontal;
+  cout << bottom_right << "\n";
 }
 
 void show_student_programs(Student* student) {
@@ -217,16 +197,16 @@ void modify_studiengang() {
     cin >> action;
 
     if (action == 'h' || action == 'H') {
-      auto existing =
-          find_if(zuordnungen.begin(), zuordnungen.end(),
-                  [&](const pair<string, string>& z) {
-                    try {
-                      return z.first == student->matrikel &&
-                             std::stoi(z.second) == std::stoi(sg_nr);
-                    } catch (const std::exception& e) {
-                      return z.first == student->matrikel && z.second == sg_nr;
-                    }
-                  });
+      auto existing = find_if(
+          zuordnungen.begin(), zuordnungen.end(),
+          [&](const pair<string, string>& z) {
+            try {
+              return z.first == student->matrikel &&
+                     std::stoi(z.second) == std::stoi(sg_nr);
+            } catch (const std::exception& e) {
+              return z.first == student->matrikel && z.second == sg_nr;
+            }
+          });
 
       if (existing != zuordnungen.end()) {
         cout << "\n⚠️  " << student->vorname << " " << student->nachname
@@ -234,6 +214,10 @@ void modify_studiengang() {
              << "' eingeschrieben!" << endl;
       } else {
         zuordnungen.emplace_back(student->matrikel, sg_nr);
+        
+        student->studiengangsnummer = sg_nr;
+        student->studiengang = studiengang->name;
+        
         cout << "\n✅ " << student->vorname << " " << student->nachname
              << " wurde erfolgreich zum Studiengang '" << studiengang->name
              << "' hinzugefügt!" << endl;
@@ -241,20 +225,30 @@ void modify_studiengang() {
     } else if (action == 'e' || action == 'E') {
       size_t initial_size = zuordnungen.size();
 
-      auto it = remove_if(zuordnungen.begin(), zuordnungen.end(),
-                          [&](const pair<string, string>& z) {
-                            try {
-                              return z.first == student->matrikel &&
-                                     std::stoi(z.second) == std::stoi(sg_nr);
-                            } catch (const std::exception& e) {
-                              return z.first == student->matrikel &&
-                                     z.second == sg_nr;
-                            }
-                          });
+      auto it = remove_if(
+          zuordnungen.begin(), zuordnungen.end(),
+          [&](const pair<string, string>& z) {
+            try {
+              return z.first == student->matrikel &&
+                     std::stoi(z.second) == std::stoi(sg_nr);
+            } catch (const std::exception& e) {
+              return z.first == student->matrikel && z.second == sg_nr;
+            }
+          });
 
       zuordnungen.erase(it, zuordnungen.end());
 
       if (zuordnungen.size() < initial_size) {
+        vector<Studiengang*> remaining = get_student_programs(student->matrikel);
+        
+        if (remaining.empty()) {
+          student->studiengangsnummer = "";
+          student->studiengang = "Kein Studiengang";
+        } else {
+          student->studiengangsnummer = remaining[0]->nr;
+          student->studiengang = remaining[0]->name;
+        }
+        
         cout << "\n✅ " << student->vorname << " " << student->nachname
              << " wurde erfolgreich aus dem Studiengang '" << studiengang->name
              << "' entfernt!" << endl;
@@ -281,39 +275,29 @@ void modify_studiengang() {
   }
 }
 
-int main() {
-  auto stud_data = read_csv("Studierende.csv");
-  if (stud_data.empty()) {
-    cerr << "Error: Could not read Studierende.csv or file is empty" << endl;
+int main(int argc, char* argv[]) {
+  unique_ptr<DataSource> dataSource;
+
+  cout << "Single file mode (s) or Multi file mode (m): " << endl;
+
+  std::string line;
+  std::getline( std::cin, line );
+  
+  if (line == "s") {
+    dataSource = make_unique<SingleFileDataSource>("studium.csv");
+    cout << "Using single file data source (studium.csv)" << endl;
+  } else if(line == "m") {
+    dataSource = make_unique<MultiFileDataSource>(
+        "Studierende.csv", "studiengaenge.csv", "zugeordnete_studiengaenge.csv");
+    cout << "Using multi-file data source" << endl;
+  }else {
+    cout << "Invalid mode!" << endl;
+    return -1;
+  }
+  
+  if (!dataSource->loadData()) {
+    cerr << "Failed to load data. Exiting." << endl;
     return 1;
-  }
-
-  for (size_t i = 1; i < stud_data.size(); ++i) {
-    if (stud_data[i].size() >= 3) {
-      studierende.push_back(
-          {stud_data[i][0], stud_data[i][1], stud_data[i][2]});
-    }
-  }
-
-  auto sg_data = read_csv("studiengaenge.csv");
-  if (sg_data.empty()) {
-    cerr << "Error: Could not read studiengaenge.csv or file is empty" << endl;
-    return 1;
-  }
-
-  for (size_t i = 1; i < sg_data.size(); ++i) {
-    if (sg_data[i].size() >= 2) {
-      studiengaenge.push_back({sg_data[i][0], sg_data[i][1]});
-    }
-  }
-
-  auto zuordnung_data = read_csv("zugeordnete_studiengaenge.csv");
-  if (!zuordnung_data.empty()) {
-    for (size_t i = 1; i < zuordnung_data.size(); ++i) {
-      if (zuordnung_data[i].size() >= 2) {
-        zuordnungen.emplace_back(zuordnung_data[i][0], zuordnung_data[i][1]);
-      }
-    }
   }
 
   cout << "Willkommen zum Studentenverwaltungssystem!" << endl;
@@ -336,22 +320,11 @@ int main() {
         unsaved_changes = true;
         break;
 
-      case 3: {
-        vector<vector<string>> new_zuordnung;
-        new_zuordnung.push_back(
-            {"Studierende_Matrikelnummer", "Studiengang_Nr"});
-        for (const auto& z : zuordnungen) {
-          new_zuordnung.push_back({z.first, z.second});
-        }
-
-        if (write_csv("zugeordnete_studiengaenge.csv", new_zuordnung)) {
-          cout << "\n✅ Änderungen wurden erfolgreich gespeichert!" << endl;
+      case 3:
+        if (dataSource->saveData()) {
           unsaved_changes = false;
-        } else {
-          cerr << "\n⚠️  Fehler beim Speichern der Änderungen!" << endl;
         }
         break;
-      }
 
       case 4:
         if (unsaved_changes) {
@@ -359,17 +332,8 @@ int main() {
           cout << "\nSie haben ungespeicherte Änderungen. Möchten Sie diese "
                   "speichern? (j/n): ";
           cin >> save;
-
           if (save == 'j' || save == 'J') {
-            vector<vector<string>> new_zuordnung;
-            new_zuordnung.push_back(
-                {"Studierende_Matrikelnummer", "Studiengang_Nr"});
-            for (const auto& z : zuordnungen) {
-              new_zuordnung.push_back({z.first, z.second});
-            }
-
-            write_csv("zugeordnete_studiengaenge.csv", new_zuordnung);
-            cout << "\n✅ Änderungen wurden erfolgreich gespeichert!" << endl;
+            dataSource->saveData();
           }
         }
         cout << "\nVielen Dank für die Nutzung des "
