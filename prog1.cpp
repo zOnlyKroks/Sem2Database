@@ -1,12 +1,5 @@
-#include <algorithm>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <map>
-#include <sstream>
-#include <string>
-#include <vector>
 #include "datasourceUtils.cpp"
+#include <stdlib.h>
 
 Student* find_student_by_name(const string& vorname, const string& nachname) {
   for (auto& student : studierende) {
@@ -47,6 +40,24 @@ vector<Studiengang*> get_student_programs(const string& matrikel) {
   return programs;
 }
 
+string get_formatted_student_programs(const string& matrikel) {
+  vector<Studiengang*> programs = get_student_programs(matrikel);
+  
+  if (programs.empty()) {
+    return "Kein Studiengang";
+  }
+  
+  string result;
+  for (size_t i = 0; i < programs.size(); i++) {
+    result += programs[i]->name;
+    if (i < programs.size() - 1) {
+      result += ", ";
+    }
+  }
+  
+  return result;
+}
+
 void display_menu() {
   cout << "\n╔════════════════════════════════════════════════════╗" << endl;
   cout << "║              STUDENTENVERWALTUNGSSYSTEM            ║" << endl;
@@ -66,7 +77,8 @@ void print_studierende() {
   size_t max_nachname = 9;
   size_t max_studiengang = 12;
   
-  for (const auto& student : studierende) {
+  for (auto& student : studierende) {
+    student.studiengang = get_formatted_student_programs(student.matrikel);
     max_vorname = max(max_vorname, student.vorname.length());
     max_nachname = max(max_nachname, student.nachname.length());
     max_studiengang = max(max_studiengang, student.studiengang.length());
@@ -215,8 +227,7 @@ void modify_studiengang() {
       } else {
         zuordnungen.emplace_back(student->matrikel, sg_nr);
         
-        student->studiengangsnummer = sg_nr;
-        student->studiengang = studiengang->name;
+        student->studiengang = get_formatted_student_programs(student->matrikel);
         
         cout << "\n✅ " << student->vorname << " " << student->nachname
              << " wurde erfolgreich zum Studiengang '" << studiengang->name
@@ -239,15 +250,7 @@ void modify_studiengang() {
       zuordnungen.erase(it, zuordnungen.end());
 
       if (zuordnungen.size() < initial_size) {
-        vector<Studiengang*> remaining = get_student_programs(student->matrikel);
-        
-        if (remaining.empty()) {
-          student->studiengangsnummer = "";
-          student->studiengang = "Kein Studiengang";
-        } else {
-          student->studiengangsnummer = remaining[0]->nr;
-          student->studiengang = remaining[0]->name;
-        }
+        student->studiengang = get_formatted_student_programs(student->matrikel);
         
         cout << "\n✅ " << student->vorname << " " << student->nachname
              << " wurde erfolgreich aus dem Studiengang '" << studiengang->name
@@ -278,7 +281,7 @@ void modify_studiengang() {
 int main(int argc, char* argv[]) {
   unique_ptr<DataSource> dataSource;
 
-  cout << "Single file mode (s) or Multi file mode (m): " << endl;
+  cout << "Single file mode (s) | Multi file mode (m): " << endl;
 
   std::string line;
   std::getline( std::cin, line );

@@ -1,15 +1,15 @@
 Matrikelnummer;Vorname;Nachname;Alter;Studiengangsnummer;Studiengang;Studiengangsleitung;Gruendungsjahr
 1002;Berta;Gross;;1;Digitale Technologien;;
-1111;Magnus;Meier;;3;Product Service Engineering;;
-1111;Magnus;Meier;;1;Digitale Technologien;;
+1111;Magnus;Meier;;3;Product Service Engineering, Digitale Technologien;;
+1111;Magnus;Meier;;1;Product Service Engineering, Digitale Technologien;;
 1231;Petra;Paulis;;2;Digitale Logistik;;
 1432;Christian;Liebler;;1;Digitale Technologien;;
 1511;Werner;Wal;;1;Digitale Technologien;;
 1512;Herbert;Klein;;3;Product Service Engineering;;
-1513;Markus;Meier;;2;Digitale Logistik;;
-1513;Markus;Meier;;1;Digitale Technologien;;
+1513;Markus;Meier;;2;Digitale Logistik, Digitale Technologien;;
+1513;Markus;Meier;;1;Digitale Logistik, Digitale Technologien;;
 1567;Meike;Moser;;2;Digitale Logistik;;
 1641;Vera;Valentin;;2;Digitale Logistik;;
 1901;Klara;Klein;;2;Digitale Logistik;;
 2001;Lina;Lindholm;;3;Product Service Engineering;;
-2004;Mareike;Mertens;;1;Digitale Technologien;;
+2004;Mareike;Mertens;;1;Kein Studiengang;;
