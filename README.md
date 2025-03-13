@@ -3,6 +3,7 @@
 ## Überblick
 
 Diese Repository enthält zwei C++-Anwendungen zur Verwaltung von Studierenden und ihren Studiengängen. Beide Programme lesen CSV-Dateien ein, ermöglichen das Anzeigen von Studierenden samt Studiengängen und bieten die Möglichkeit, die Studiengangszuordnung zu ändern und zu speichern.
+Github: <https://github.com/zOnlyKroks/Sem2Database>
 
 ## Programme
 
